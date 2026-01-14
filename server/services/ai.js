@@ -1,11 +1,36 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Usage = require('../models/Usage');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const MODEL_NAME = "gemini-2.5-flash";
 
-async function analyzeInvoice(fileBuffer, mimeType) {
+const MODELS = {
+  standard: "gemini-2.5-flash",
+  lite: "gemini-2.5-flash-lite"
+};
+
+const DAILY_LIMIT = 20;
+
+async function checkAndIncrementUsage() {
+  const today = new Date().toISOString().split('T')[0];
+
+  let usageLog = await Usage.findOne({ date: today });
+  if (!usageLog) {
+    usageLog = new Usage({ date: today, count: 0 });
+  }
+
+  usageLog.count += 1;
+  await usageLog.save();
+  return usageLog.count;
+}
+
+async function analyzeInvoice(fileBuffer, mimeType, modelChoice = 'standard') {
+  await checkAndIncrementUsage();
+
+  const selectedModelName = MODELS[modelChoice] || MODELS.standard;
+  console.log(`AI Processing with: ${selectedModelName}`);
+
   const model = genAI.getGenerativeModel({
-    model: MODEL_NAME,
+    model: selectedModelName,
     generationConfig: { responseMimeType: "application/json" },
   });
 
@@ -41,14 +66,23 @@ async function analyzeInvoice(fileBuffer, mimeType) {
     const responseText = result.response.text();
     return JSON.parse(responseText);
   } catch (error) {
-    console.error("AI Analysis Failed:", error);
-    throw new Error("Failed to process invoice with AI");
+    console.error("AI Analysis Failed:", error.message);
+
+    if (error.message.includes("429") || error.message.includes("Quota") || error.message.includes("Resource exhausted")) {
+      throw new Error("GOOGLE_QUOTA_EXCEEDED");
+    }
+
+    throw new Error("AI_PROCESSING_FAILED");
   }
 }
 
-async function chatWithInvoices(userMessage, contextData) {
+async function chatWithInvoices(userMessage, contextData, modelChoice = 'standard') {
+  await checkAndIncrementUsage();
+
+  const selectedModelName = MODELS[modelChoice] || MODELS.standard;
+
   const model = genAI.getGenerativeModel({
-    model: MODEL_NAME,
+    model: selectedModelName,
     safetySettings: [
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -58,24 +92,20 @@ async function chatWithInvoices(userMessage, contextData) {
   });
 
   const prompt = `
-    You are a helpful AI finance assistant for an Invoice Processing App.
-    
-    USER DATA (Invoices):
-    ${contextData}
-
+    You are a helpful AI finance assistant.
+    USER DATA: ${contextData}
     USER QUESTION: "${userMessage}"
-
-    INSTRUCTIONS:
-    - Answer briefly based on the data above.
-    - If the user asks about fraud prevention, give general advice based on the high-risk invoices shown.
-    - If you cannot answer, say "I don't have enough data."
+    Keep it brief.
   `;
 
   try {
     const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (error) {
-    console.error("AI Chat Failed:", error);
+    console.error("AI Chat Failed:", error.message);
+    if (error.message.includes("429") || error.message.includes("Resource exhausted")) {
+      throw new Error("GOOGLE_QUOTA_EXCEEDED");
+    }
     return "I am currently overloaded. Please try again later.";
   }
 }

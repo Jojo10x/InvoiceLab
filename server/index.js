@@ -5,6 +5,7 @@ const cors = require('cors');
 const multer = require('multer');
 const { requireAuth } = require('./middleware/auth');
 const Invoice = require('./models/Invoice');
+const Usage = require('./models/Usage');
 const { analyzeInvoice, chatWithInvoices } = require('./services/ai');
 
 const app = express();
@@ -28,15 +29,28 @@ const upload = multer({
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log(' MongoDB Connected'))
   .catch(err => {
-    console.error(' MongoDB Connection Error:', err);
+    console.error('MongoDB Connection Error:', err);
     process.exit(1);
   });
+
+app.get('/api/usage', requireAuth, async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const usage = await Usage.findOne({ date: today });
+    res.json({ count: usage ? usage.count : 0, limit: 20 });
+  } catch (error) {
+    console.error("Usage Check Error:", error);
+    res.status(500).json({ error: "Could not fetch usage" });
+  }
+});
 
 app.post('/api/invoices', requireAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const aiResult = await analyzeInvoice(req.file.buffer, req.file.mimetype);
+    const modelChoice = req.body.model || 'standard';
+
+    const aiResult = await analyzeInvoice(req.file.buffer, req.file.mimetype, modelChoice);
 
     const newInvoice = new Invoice({
       userId: req.auth.userId,
@@ -47,8 +61,14 @@ app.post('/api/invoices', requireAuth, upload.single('file'), async (req, res) =
 
     await newInvoice.save();
     res.json(newInvoice);
+
   } catch (error) {
-    console.error("Upload Error:", error);
+    console.error("Upload Error:", error.message);
+
+    if (error.message === "GOOGLE_QUOTA_EXCEEDED") {
+      return res.status(429).json({ error: "Daily Google AI Quota Exceeded. Try again tomorrow or switch models." });
+    }
+
     res.status(500).json({ error: "Failed to process invoice" });
   }
 });
@@ -65,7 +85,7 @@ app.get('/api/invoices', requireAuth, async (req, res) => {
 
 app.post('/api/chat', requireAuth, async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, model } = req.body; 
 
     const invoices = await Invoice.find({ userId: req.auth.userId });
     
@@ -75,10 +95,14 @@ app.post('/api/chat', requireAuth, async (req, res) => {
         ).join('\n')
       : "No invoices uploaded yet.";
 
-    const reply = await chatWithInvoices(message, context);
+    const reply = await chatWithInvoices(message, context, model);
     res.json({ reply });
+
   } catch (error) {
-    console.error("Chat Error:", error);
+    console.error("Chat Error:", error.message);
+    if (error.message === "GOOGLE_QUOTA_EXCEEDED") {
+      return res.status(429).json({ error: "Daily AI Limit Reached." });
+    }
     res.status(500).json({ error: "Chat service unavailable" });
   }
 });

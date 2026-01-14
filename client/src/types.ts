@@ -26,8 +26,23 @@ export interface Invoice {
   _id: string;
   userId: string;
   fileName: string;
-  fileUrl?: string;
-  extractedData: ExtractedData;
-  analysis: AnalysisData;
+  extractedData?: {
+    vendor?: string;
+    amount?: number;
+    date?: string;
+    currency?: string;
+  };
+  analysis?: {
+    category?: string;
+    fraud?: {
+      score: number;
+      reason?: string;
+    };
+    compliance?: {
+      status: string;
+      note?: string;
+    };
+    summary?: string;
+  };
   createdAt: string;
 }
