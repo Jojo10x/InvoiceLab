@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/Dashboard/Dashboard";
 import { ChatAssistant } from "./components/ChatAssistant";
 import { Zap, Shield, Clock, ArrowRight } from "lucide-react";
 
