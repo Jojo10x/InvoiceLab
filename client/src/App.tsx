@@ -6,16 +6,20 @@ import { Zap, Shield, Clock, ArrowRight } from "lucide-react";
 function App() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      <header className="flex justify-between items-center p-4 bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">I</div>
-          <h1 className="text-xl font-bold text-gray-800">InvoiceLab</h1>
+      <header className="flex justify-between items-center px-6 py-4 bg-white shadow-sm border-b sticky top-0 z-10 backdrop-blur-sm bg-white/95">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            InvoiceLab
+          </h1>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex items-center gap-4">
           <SignedOut>
             <SignInButton mode="modal">
-              <button className="text-sm font-medium text-gray-600 hover:text-blue-600">Sign In</button>
+              <button className="cursor-pointer group bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium text-sm shadow-sm hover:shadow inline-flex items-center gap-2">
+                Sign In
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
             </SignInButton>
           </SignedOut>
           <SignedIn>
