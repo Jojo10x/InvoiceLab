@@ -33,6 +33,10 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
+app.get('/', (req, res) => {
+  res.send('Invoice AI Backend is running ');
+});
+
 app.get('/api/usage', requireAuth, async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
