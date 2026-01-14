@@ -30,7 +30,6 @@ export function UploadInvoice({ onUploadSuccess }: Props) {
 
         try {
             const token = await getToken();
-            console.log("🔐 SENDING TOKEN:", token);
 
             if (!token) {
                 setError("User is not authenticated (No token found)");
