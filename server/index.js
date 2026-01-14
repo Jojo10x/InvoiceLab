@@ -73,6 +73,10 @@ app.post('/api/invoices', requireAuth, upload.single('file'), async (req, res) =
       return res.status(429).json({ error: "Daily Google AI Quota Exceeded. Try again tomorrow or switch models." });
     }
 
+    if (error.message === "MODEL_OVERLOADED") {
+      return res.status(503).json({ error: "The AI model is temporarily overloaded. Please try again in a few moments." });
+    }
+
     res.status(500).json({ error: "Failed to process invoice" });
   }
 });

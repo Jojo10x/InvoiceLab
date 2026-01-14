@@ -38,15 +38,16 @@ export function UploadInvoice({ onUploadSuccess, selectedModel }: UploadProps) {
                 },
             });
             onUploadSuccess(res.data);
-        } catch (error) {
+        }  catch (error) {
             console.error("Upload failed", error);
 
             const axiosError = error as AxiosError<{ error: string }>;
 
             if (axiosError.response?.status === 429) {
                 setIsQuotaError(true);
-
                 setError(axiosError.response.data?.error || "Daily Limit Reached.");
+            } else if (axiosError.response?.status === 503) {
+                setError(axiosError.response.data?.error || "AI model is temporarily overloaded. Please try again shortly.");
             } else {
                 setError("Failed to process invoice. Please try again.");
             }

@@ -72,6 +72,10 @@ async function analyzeInvoice(fileBuffer, mimeType, modelChoice = 'standard') {
       throw new Error("GOOGLE_QUOTA_EXCEEDED");
     }
 
+    if (error.message.includes("503") || error.message.includes("overloaded")) {
+      throw new Error("MODEL_OVERLOADED");
+    }
+
     throw new Error("AI_PROCESSING_FAILED");
   }
 }
