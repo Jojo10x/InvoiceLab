@@ -1,5 +1,6 @@
 import type { Invoice } from '../../types';
 import { ShieldAlert, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Fragment } from 'react';
 
 interface InvoiceTableProps {
     invoices: Invoice[];
@@ -44,8 +45,8 @@ export function InvoiceTable({ invoices, loading, expandedRow, onToggleRow }: In
                         </thead>
                         <tbody className="divide-y">
                             {invoices.map((inv) => (
-                                <>
-                                    <tr key={inv._id} className="hover:bg-gray-50 transition">
+                                <Fragment key={inv._id}>
+                                    <tr className="hover:bg-gray-50 transition">
                                         <td className="p-4">
                                             {inv.analysis?.compliance?.status === 'flagged' ? (
                                                 <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium flex w-fit items-center gap-1">
@@ -99,7 +100,7 @@ export function InvoiceTable({ invoices, loading, expandedRow, onToggleRow }: In
                                             </td>
                                         </tr>
                                     )}
-                                </>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
