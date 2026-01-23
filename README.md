@@ -1,6 +1,6 @@
 # InvoiceLab - AI-Powered Invoice Processing Application
 
-# SITE - https://invoice-lab-five.vercel.app/
+# SITE - https://invoicelab.vercel.app/
 
 InvoiceLab is a full-stack web application designed to automate the extraction, analysis, and management of financial documents. It utilizes Google Gemini AI (Multimodal) to parse invoice images and PDFs, extracting key data points while simultaneously assessing fraud risk and compliance status.
 
