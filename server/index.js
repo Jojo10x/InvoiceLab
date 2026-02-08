@@ -37,6 +37,14 @@ app.get('/', (req, res) => {
   res.send('Invoice AI Backend is running ');
 });
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'invoice-ai-backend'
+  });
+});
+
 app.get('/api/usage', requireAuth, async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
